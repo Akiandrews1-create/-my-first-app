@@ -14,162 +14,212 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 
 ADMIN_USERNAME = "isaiah"
+DB_PATH = "users.db"
 
 
-# ===== DATABASE =====
+def get_db_connection():
+    conn = sqlite3.connect(DB_PATH, timeout=10)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA foreign_keys = ON;")
+    return conn
+
+
 def init_db():
-    conn = sqlite3.connect("users.db")
-    c = conn.cursor()
+    with get_db_connection() as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL
+            )
+        """)
 
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT
-        )
-    """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS calculations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                expression TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+        """)
 
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS calculations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            expression TEXT
-        )
-    """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS login_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                username TEXT NOT NULL,
+                action TEXT NOT NULL,
+                ip_address TEXT,
+                log_time TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        """)
 
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS login_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            username TEXT,
-            action TEXT,
-            ip_address TEXT,
-            log_time TEXT
-        )
-    """)
-
-    conn.commit()
-    conn.close()
 
 init_db()
 
 
-# ===== USER =====
 class User(UserMixin):
-    def __init__(self, id, username):
-        self.id = str(id)
+    def __init__(self, user_id, username):
+        self.id = str(user_id)
         self.username = username
 
 
 @login_manager.user_loader
 def load_user(user_id):
-    conn = sqlite3.connect("users.db")
-    c = conn.cursor()
-    c.execute("SELECT id, username FROM users WHERE id=?", (user_id,))
-    user = c.fetchone()
-    conn.close()
+    with get_db_connection() as conn:
+        user = conn.execute(
+            "SELECT id, username FROM users WHERE id = ?",
+            (user_id,)
+        ).fetchone()
 
     if user:
-        return User(user[0], user[1])
+        return User(user["id"], user["username"])
     return None
 
 
-# ===== HELPERS =====
 def log_action(user_id, username, action):
     ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    if ip and "," in ip:
+        ip = ip.split(",")[0].strip()
 
-    conn = sqlite3.connect("users.db")
-    c = conn.cursor()
-    c.execute("""
-        INSERT INTO login_logs (user_id, username, action, ip_address, log_time)
-        VALUES (?, ?, ?, ?, datetime('now'))
-    """, (user_id, username, action, ip))
-    conn.commit()
-    conn.close()
+    with get_db_connection() as conn:
+        conn.execute(
+            """
+            INSERT INTO login_logs (user_id, username, action, ip_address)
+            VALUES (?, ?, ?, ?)
+            """,
+            (user_id, username, action, ip)
+        )
 
 
 @app.before_request
-def keep_alive():
+def keep_session_alive():
     session.permanent = True
 
 
-# ===== ROUTES =====
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def home():
     result = ""
     special_message = ""
-
-    conn = sqlite3.connect("users.db")
-    c = conn.cursor()
+    error_message = ""
+    success_message = ""
+    num1_value = ""
+    num2_value = ""
+    operation_value = "+"
 
     if request.method == "POST":
         if "clear" in request.form:
-            c.execute("DELETE FROM calculations WHERE user_id=?", (current_user.id,))
-            conn.commit()
+            with get_db_connection() as conn:
+                conn.execute(
+                    "DELETE FROM calculations WHERE user_id = ?",
+                    (current_user.id,)
+                )
+            success_message = "History cleared successfully."
         else:
+            num1_value = request.form.get("num1", "").strip()
+            num2_value = request.form.get("num2", "").strip()
+            operation_value = request.form.get("operation", "+")
+
             try:
-                n1 = float(request.form["num1"])
-                n2 = float(request.form["num2"])
-                op = request.form["operation"]
+                num1 = float(num1_value)
+                num2 = float(num2_value)
+                op = operation_value
 
-                if op == "+": result = n1 + n2
-                elif op == "-": result = n1 - n2
-                elif op == "*": result = n1 * n2
-                elif op == "/": result = n1 / n2 if n2 != 0 else "Cannot divide by zero"
+                if op == "+":
+                    result = num1 + num2
+                elif op == "-":
+                    result = num1 - num2
+                elif op == "*":
+                    result = num1 * num2
+                elif op == "/":
+                    if num2 == 0:
+                        result = "Cannot divide by zero"
+                    else:
+                        result = num1 / num2
+                else:
+                    result = "Invalid operation"
 
-                expr = f"{n1} {op} {n2} = {result}"
-                c.execute("INSERT INTO calculations (user_id, expression) VALUES (?, ?)", (current_user.id, expr))
-                conn.commit()
+                expression = f"{num1} {op} {num2} = {result}"
+
+                with get_db_connection() as conn:
+                    conn.execute(
+                        "INSERT INTO calculations (user_id, expression) VALUES (?, ?)",
+                        (current_user.id, expression)
+                    )
+
+                success_message = "Calculation saved."
 
                 if result == 69:
-                    special_message = "SAYANGGGGG ❤️"
+                    special_message = "SAYANGGGGG BUNNNNYYY ❤️"
 
-            except:
-                result = "Invalid input"
+            except ValueError:
+                error_message = "Please enter valid numbers."
 
-    c.execute("SELECT expression FROM calculations WHERE user_id=? ORDER BY id DESC", (current_user.id,))
-    history = [row[0] for row in c.fetchall()]
+    with get_db_connection() as conn:
+        history_rows = conn.execute(
+            "SELECT expression FROM calculations WHERE user_id = ? ORDER BY id DESC",
+            (current_user.id,)
+        ).fetchall()
 
-    c.execute("SELECT COUNT(*) FROM calculations WHERE user_id=?", (current_user.id,))
-    total = c.fetchone()[0]
+        total_calculations = conn.execute(
+            "SELECT COUNT(*) AS count FROM calculations WHERE user_id = ?",
+            (current_user.id,)
+        ).fetchone()["count"]
 
-    conn.close()
+    history = [row["expression"] for row in history_rows]
 
-    return render_template("index.html",
-                           result=result,
-                           history=history,
-                           total_calculations=total,
-                           special_message=special_message,
-                           user=current_user.username)
+    return render_template(
+        "index.html",
+        result=result,
+        history=history,
+        total_calculations=total_calculations,
+        special_message=special_message,
+        error_message=error_message,
+        success_message=success_message,
+        user=current_user.username,
+        num1_value=num1_value,
+        num2_value=num2_value,
+        operation_value=operation_value
+    )
 
 
 @app.route("/profile")
 @login_required
 def profile():
-    conn = sqlite3.connect("users.db")
-    c = conn.cursor()
+    with get_db_connection() as conn:
+        total_calculations = conn.execute(
+            "SELECT COUNT(*) AS count FROM calculations WHERE user_id = ?",
+            (current_user.id,)
+        ).fetchone()["count"]
 
-    c.execute("SELECT COUNT(*) FROM calculations WHERE user_id=?", (current_user.id,))
-    total_calc = c.fetchone()[0]
+        total_logins = conn.execute(
+            "SELECT COUNT(*) AS count FROM login_logs WHERE username = ? AND action = 'login'",
+            (current_user.username,)
+        ).fetchone()["count"]
 
-    c.execute("SELECT COUNT(*) FROM login_logs WHERE username=? AND action='login'", (current_user.username,))
-    logins = c.fetchone()[0]
+        total_logouts = conn.execute(
+            "SELECT COUNT(*) AS count FROM login_logs WHERE username = ? AND action = 'logout'",
+            (current_user.username,)
+        ).fetchone()["count"]
 
-    c.execute("SELECT COUNT(*) FROM login_logs WHERE username=? AND action='logout'", (current_user.username,))
-    logouts = c.fetchone()[0]
+        recent_rows = conn.execute(
+            "SELECT expression FROM calculations WHERE user_id = ? ORDER BY id DESC LIMIT 5",
+            (current_user.id,)
+        ).fetchall()
 
-    c.execute("SELECT expression FROM calculations WHERE user_id=? ORDER BY id DESC LIMIT 5", (current_user.id,))
-    recent = [row[0] for row in c.fetchall()]
+    recent_history = [row["expression"] for row in recent_rows]
 
-    conn.close()
-
-    return render_template("profile.html",
-                           user=current_user.username,
-                           total_calculations=total_calc,
-                           total_logins=logins,
-                           total_logouts=logouts,
-                           recent_history=recent)
+    return render_template(
+        "profile.html",
+        user=current_user.username,
+        total_calculations=total_calculations,
+        total_logins=total_logins,
+        total_logouts=total_logouts,
+        recent_history=recent_history
+    )
 
 
 @app.route("/logs")
@@ -178,69 +228,88 @@ def logs():
     if current_user.username.lower() != ADMIN_USERNAME:
         abort(403)
 
-    conn = sqlite3.connect("users.db")
-    c = conn.cursor()
+    with get_db_connection() as conn:
+        rows = conn.execute("""
+            SELECT username, action, ip_address, log_time
+            FROM login_logs
+            ORDER BY id DESC
+        """).fetchall()
 
-    c.execute("SELECT username, action, ip_address, log_time FROM login_logs ORDER BY id DESC")
-    rows = c.fetchall()
+        total_logins = conn.execute(
+            "SELECT COUNT(*) AS count FROM login_logs WHERE action = 'login'"
+        ).fetchone()["count"]
 
-    c.execute("SELECT COUNT(*) FROM login_logs WHERE action='login'")
-    total_logins = c.fetchone()[0]
+        total_logouts = conn.execute(
+            "SELECT COUNT(*) AS count FROM login_logs WHERE action = 'logout'"
+        ).fetchone()["count"]
 
-    c.execute("SELECT COUNT(*) FROM login_logs WHERE action='logout'")
-    total_logouts = c.fetchone()[0]
+        unique_users = conn.execute(
+            "SELECT COUNT(DISTINCT username) AS count FROM login_logs"
+        ).fetchone()["count"]
 
-    c.execute("SELECT COUNT(DISTINCT username) FROM login_logs")
-    unique_users = c.fetchone()[0]
-
-    conn.close()
-
-    return render_template("logs.html",
-                           logs=rows,
-                           total_logins=total_logins,
-                           total_logouts=total_logouts,
-                           unique_users=unique_users)
+    return render_template(
+        "logs.html",
+        logs=rows,
+        total_logins=total_logins,
+        total_logouts=total_logouts,
+        unique_users=unique_users,
+        user=current_user.username
+    )
 
 
-@app.route("/register", methods=["GET","POST"])
+@app.route("/register", methods=["GET", "POST"])
 def register():
+    error_message = ""
+
     if request.method == "POST":
-        username = request.form["username"].lower()
-        password = generate_password_hash(request.form["password"])
-
-        conn = sqlite3.connect("users.db")
-        c = conn.cursor()
-
-        try:
-            c.execute("INSERT INTO users (username,password) VALUES (?,?)", (username,password))
-            conn.commit()
-        except:
-            return "User exists"
-
-        return redirect("/login")
-
-    return render_template("register.html")
-
-
-@app.route("/login", methods=["GET","POST"])
-def login():
-    if request.method == "POST":
-        username = request.form["username"].lower()
+        username = request.form["username"].strip().lower()
         password = request.form["password"]
 
-        conn = sqlite3.connect("users.db")
-        c = conn.cursor()
-        c.execute("SELECT * FROM users WHERE username=?", (username,))
-        user = c.fetchone()
+        if not username or not password:
+            error_message = "Username and password are required."
+            return render_template("register.html", error_message=error_message)
 
-        if user and check_password_hash(user[2], password):
-            login_user(User(user[0], user[1]))
-            log_action(user[0], user[1], "login")
-            return redirect("/")
+        if len(username) > 30:
+            error_message = "Username must be 30 characters or fewer."
+            return render_template("register.html", error_message=error_message)
 
-        return "Invalid credentials"
+        hashed_password = generate_password_hash(password)
 
-    return render_template("login.html")
+        try:
+            with get_db_connection() as conn:
+                conn.execute(
+                    "INSERT INTO users (username, password) VALUES (?, ?)",
+                    (username, hashed_password)
+                )
+            return redirect(url_for("login"))
+        except sqlite3.IntegrityError:
+            error_message = "That username is already taken."
+
+    return render_template("register.html", error_message=error_message)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error_message = ""
+
+    if request.method == "POST":
+        username = request.form["username"].strip().lower()
+        password = request.form["password"]
+
+        with get_db_connection() as conn:
+            user = conn.execute(
+                "SELECT * FROM users WHERE username = ?",
+                (username,)
+            ).fetchone()
+
+        if user and check_password_hash(user["password"], password):
+            login_user(User(user["id"], user["username"]))
+            log_action(user["id"], user["username"], "login")
+            return redirect(url_for("home"))
+
+        error_message = "Invalid username or password."
+
+    return render_template("login.html", error_message=error_message)
 
 
 @app.route("/logout")
@@ -248,7 +317,7 @@ def login():
 def logout():
     log_action(current_user.id, current_user.username, "logout")
     logout_user()
-    return redirect("/login")
+    return redirect(url_for("login"))
 
 
 if __name__ == "__main__":
