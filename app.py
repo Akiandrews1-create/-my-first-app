@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, redirect, url_for
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
-import os
 
 app = Flask(__name__)
 app.secret_key = "secret123"  # change later
@@ -45,34 +44,47 @@ def load_user(user_id):
     return None
 
 # ===== ROUTES =====
-
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def calculator():
     result = ""
-    history = []
+
+    if "history" not in request.cookies:
+        history = []
+    else:
+        history = request.cookies.get("history").split("|") if request.cookies.get("history") else []
 
     if request.method == "POST":
-        try:
-            num1 = float(request.form["num1"])
-            num2 = float(request.form["num2"])
-            op = request.form["operation"]
+        if "clear" in request.form:
+            history = []
+        else:
+            try:
+                num1 = float(request.form["num1"])
+                num2 = float(request.form["num2"])
+                op = request.form["operation"]
 
-            if op == "+":
-                result = num1 + num2
-            elif op == "-":
-                result = num1 - num2
-            elif op == "*":
-                result = num1 * num2
-            elif op == "/":
-                result = num1 / num2 if num2 != 0 else "Cannot divide by zero"
+                if op == "+":
+                    result = num1 + num2
+                elif op == "-":
+                    result = num1 - num2
+                elif op == "*":
+                    result = num1 * num2
+                elif op == "/":
+                    result = num1 / num2 if num2 != 0 else "Cannot divide by zero"
+                else:
+                    result = "Invalid operation"
 
-            history.append(f"{num1} {op} {num2} = {result}")
+                history.append(f"{num1} {op} {num2} = {result}")
 
-        except:
-            result = "Invalid input"
+            except:
+                result = "Invalid input"
 
-    return render_template("index.html", result=result, history=history, user=current_user.username)
+    response = app.make_response(
+        render_template("index.html", result=result, history=history, user=current_user.username)
+    )
+
+    response.set_cookie("history", "|".join(history))
+    return response
 
 # ===== REGISTER =====
 @app.route("/register", methods=["GET", "POST"])
@@ -88,6 +100,7 @@ def register():
             c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
             conn.commit()
         except:
+            conn.close()
             return "User already exists"
 
         conn.close()
@@ -125,4 +138,6 @@ def logout():
 
 # ===== RUN =====
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    import os
+    port = int(os.environ.get("PORT", 10000))  # Render uses this
+    app.run(host="0.0.0.0", port=port)
