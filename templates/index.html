@@ -11,17 +11,13 @@
 
         :root {
             --bg: #0b1220;
-            --bg-soft: #111827;
             --panel: rgba(17, 24, 39, 0.82);
-            --panel-2: #1f2937;
             --muted: #94a3b8;
             --text: #e5e7eb;
             --text-strong: #f8fafc;
             --line: rgba(255,255,255,0.07);
             --blue: #3b82f6;
             --blue-dark: #2563eb;
-            --green: #10b981;
-            --red: #ef4444;
             --shadow: 0 20px 40px rgba(0,0,0,0.28);
             --radius: 24px;
         }
@@ -511,10 +507,10 @@
 
                 {% if history %}
                     <ul class="history-list">
-                        {% for item in history|reverse %}
+                        {% for item in history %}
                             <li class="history-item">
                                 <span class="history-expression">{{ item }}</span>
-                                <span class="history-index">#{{ loop.revindex }}</span>
+                                <span class="history-index">#{{ loop.index }}</span>
                             </li>
                         {% endfor %}
                     </ul>

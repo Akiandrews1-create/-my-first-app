@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
+import os
 
 app = Flask(__name__)
 app.secret_key = "secret123"  # change later
@@ -14,6 +15,7 @@ login_manager.login_view = "login"
 def init_db():
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
+
     c.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,6 +23,16 @@ def init_db():
             password TEXT
         )
     """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS calculations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            expression TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -39,6 +51,7 @@ def load_user(user_id):
     c.execute("SELECT * FROM users WHERE id=?", (user_id,))
     user = c.fetchone()
     conn.close()
+
     if user:
         return User(user[0], user[1])
     return None
@@ -49,14 +62,13 @@ def load_user(user_id):
 def calculator():
     result = ""
 
-    if "history" not in request.cookies:
-        history = []
-    else:
-        history = request.cookies.get("history").split("|") if request.cookies.get("history") else []
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
 
     if request.method == "POST":
         if "clear" in request.form:
-            history = []
+            c.execute("DELETE FROM calculations WHERE user_id=?", (current_user.id,))
+            conn.commit()
         else:
             try:
                 num1 = float(request.form["num1"])
@@ -74,17 +86,31 @@ def calculator():
                 else:
                     result = "Invalid operation"
 
-                history.append(f"{num1} {op} {num2} = {result}")
+                expression = f"{num1} {op} {num2} = {result}"
+                c.execute(
+                    "INSERT INTO calculations (user_id, expression) VALUES (?, ?)",
+                    (current_user.id, expression)
+                )
+                conn.commit()
 
             except:
                 result = "Invalid input"
 
-    response = app.make_response(
-        render_template("index.html", result=result, history=history, user=current_user.username)
+    c.execute(
+        "SELECT expression FROM calculations WHERE user_id=? ORDER BY id DESC",
+        (current_user.id,)
     )
+    history_rows = c.fetchall()
+    conn.close()
 
-    response.set_cookie("history", "|".join(history))
-    return response
+    history = [row[0] for row in history_rows]
+
+    return render_template(
+        "index.html",
+        result=result,
+        history=history,
+        user=current_user.username
+    )
 
 # ===== REGISTER =====
 @app.route("/register", methods=["GET", "POST"])
@@ -138,6 +164,5 @@ def logout():
 
 # ===== RUN =====
 if __name__ == "__main__":
-    import os
-    port = int(os.environ.get("PORT", 10000))  # Render uses this
+    port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
