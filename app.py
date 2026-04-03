@@ -1,34 +1,39 @@
-while True:
-    print("\n=== Simple Calculator ===")
+from flask import Flask, request, render_template
 
-    try:
-        num1 = float(input("Enter first number: "))
-        num2 = float(input("Enter second number: "))
-    except ValueError:
-        print("❌ Invalid number, try again!")
-        continue
+app = Flask(__name__)
 
-    print("Choose operation (+, -, *, /)")
-    op = input("Operation: ")
+history = []
 
-    if op == "+":
-        result = num1 + num2
-    elif op == "-":
-        result = num1 - num2
-    elif op == "*":
-        result = num1 * num2
-    elif op == "/":
-        if num2 == 0:
-            print("❌ Cannot divide by zero!")
-            continue
-        result = num1 / num2
-    else:
-        print("❌ Invalid operation!")
-        continue
+@app.route("/", methods=["GET", "POST"])
+def calculator():
+    result = ""
 
-    print(f"✅ Result: {result}")
+    if request.method == "POST":
+        try:
+            num1 = float(request.form["num1"])
+            num2 = float(request.form["num2"])
+            op = request.form["operation"]
 
-    again = input("Do another calculation? (y/n): ")
-    if again.lower() != "y":
-        print("👋 Bye bro!")
-        break
+            if op == "+":
+                result = num1 + num2
+            elif op == "-":
+                result = num1 - num2
+            elif op == "*":
+                result = num1 * num2
+            elif op == "/":
+                if num2 == 0:
+                    result = "Cannot divide by zero"
+                else:
+                    result = num1 / num2
+            else:
+                result = "Invalid operation"
+
+            history.append(f"{num1} {op} {num2} = {result}")
+
+        except ValueError:
+            result = "Please enter valid numbers"
+
+    return render_template("index.html", result=result, history=history)
+
+if __name__ == "__main__":
+    app.run(debug=True)

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Isaiah Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111827;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .card {
+            background: #1f2937;
+            padding: 30px;
+            border-radius: 16px;
+            width: 360px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        h1, h2 {
+            text-align: center;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        input, select {
+            background: #374151;
+            color: white;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .result {
+            margin-top: 16px;
+            padding: 12px;
+            background: #111827;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .history {
+            margin-top: 20px;
+            background: #111827;
+            padding: 12px;
+            border-radius: 10px;
+        }
+
+        .history ul {
+            padding-left: 20px;
+        }
+
+        .history li {
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Isaiah Calculator</h1>
+
+        <form method="POST">
+            <input type="text" name="num1" placeholder="First number" required>
+            <input type="text" name="num2" placeholder="Second number" required>
+
+            <select name="operation">
+                <option value="+">Add (+)</option>
+                <option value="-">Subtract (-)</option>
+                <option value="*">Multiply (*)</option>
+                <option value="/">Divide (/)</option>
+            </select>
+
+            <button type="submit">Calculate</button>
+        </form>
+
+        <div class="result">Result: {{ result }}</div>
+
+        <div class="history">
+            <h2>History</h2>
+            <ul>
+                {% for item in history %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
