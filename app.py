@@ -5,11 +5,12 @@ import sqlite3
 import os
 
 app = Flask(__name__)
-app.secret_key = "secret123"  # change later
+app.secret_key = "secret123"  # change later to something stronger
 
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
+
 
 # ===== DATABASE SETUP =====
 def init_db():
@@ -36,19 +37,22 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 init_db()
+
 
 # ===== USER CLASS =====
 class User(UserMixin):
-    def __init__(self, id, username):
-        self.id = id
+    def __init__(self, user_id, username):
+        self.id = str(user_id)
         self.username = username
+
 
 @login_manager.user_loader
 def load_user(user_id):
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
-    c.execute("SELECT * FROM users WHERE id=?", (user_id,))
+    c.execute("SELECT id, username FROM users WHERE id = ?", (user_id,))
     user = c.fetchone()
     conn.close()
 
@@ -56,18 +60,20 @@ def load_user(user_id):
         return User(user[0], user[1])
     return None
 
+
 # ===== ROUTES =====
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def calculator():
     result = ""
+    special_message = ""
 
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
 
     if request.method == "POST":
         if "clear" in request.form:
-            c.execute("DELETE FROM calculations WHERE user_id=?", (current_user.id,))
+            c.execute("DELETE FROM calculations WHERE user_id = ?", (current_user.id,))
             conn.commit()
         else:
             try:
@@ -82,7 +88,10 @@ def calculator():
                 elif op == "*":
                     result = num1 * num2
                 elif op == "/":
-                    result = num1 / num2 if num2 != 0 else "Cannot divide by zero"
+                    if num2 == 0:
+                        result = "Cannot divide by zero"
+                    else:
+                        result = num1 / num2
                 else:
                     result = "Invalid operation"
 
@@ -93,11 +102,14 @@ def calculator():
                 )
                 conn.commit()
 
-            except:
+                if result == 69:
+                    special_message = "SAYANGGGGG ❤️"
+
+            except ValueError:
                 result = "Invalid input"
 
     c.execute(
-        "SELECT expression FROM calculations WHERE user_id=? ORDER BY id DESC",
+        "SELECT expression FROM calculations WHERE user_id = ? ORDER BY id DESC",
         (current_user.id,)
     )
     history_rows = c.fetchall()
@@ -109,23 +121,32 @@ def calculator():
         "index.html",
         result=result,
         history=history,
-        user=current_user.username
+        user=current_user.username,
+        special_message=special_message
     )
 
-# ===== REGISTER =====
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form["username"]
-        password = generate_password_hash(request.form["password"])
+        username = request.form["username"].strip()
+        password = request.form["password"]
+
+        if not username or not password:
+            return "Username and password are required"
+
+        hashed_password = generate_password_hash(password)
 
         conn = sqlite3.connect("users.db")
         c = conn.cursor()
 
         try:
-            c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+            c.execute(
+                "INSERT INTO users (username, password) VALUES (?, ?)",
+                (username, hashed_password)
+            )
             conn.commit()
-        except:
+        except sqlite3.IntegrityError:
             conn.close()
             return "User already exists"
 
@@ -134,16 +155,16 @@ def register():
 
     return render_template("register.html")
 
-# ===== LOGIN =====
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
+        username = request.form["username"].strip()
         password = request.form["password"]
 
         conn = sqlite3.connect("users.db")
         c = conn.cursor()
-        c.execute("SELECT * FROM users WHERE username=?", (username,))
+        c.execute("SELECT id, username, password FROM users WHERE username = ?", (username,))
         user = c.fetchone()
         conn.close()
 
@@ -155,12 +176,13 @@ def login():
 
     return render_template("login.html")
 
-# ===== LOGOUT =====
+
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
     return redirect(url_for("login"))
+
 
 # ===== RUN =====
 if __name__ == "__main__":
