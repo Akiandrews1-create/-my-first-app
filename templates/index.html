@@ -18,17 +18,19 @@
             --line: rgba(255,255,255,0.07);
             --blue: #3b82f6;
             --blue-dark: #2563eb;
+            --green: #10b981;
+            --red: #ef4444;
             --shadow: 0 20px 40px rgba(0,0,0,0.28);
             --radius: 24px;
         }
 
         body {
             margin: 0;
-            font-family: Inter, Arial, sans-serif;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
             background:
-                radial-gradient(circle at top left, rgba(59,130,246,0.14), transparent 25%),
-                radial-gradient(circle at bottom right, rgba(16,185,129,0.10), transparent 20%),
-                linear-gradient(135deg, #08111f 0%, #0f172a 45%, #111827 100%);
+                radial-gradient(circle at 20% 10%, rgba(59,130,246,0.08), transparent 30%),
+                radial-gradient(circle at 80% 90%, rgba(16,185,129,0.06), transparent 30%),
+                #0b1220;
             color: var(--text);
             min-height: 100vh;
             overflow-x: hidden;
@@ -38,7 +40,7 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 28px 20px 40px;
-            position: relative;
+            animation: fadeUp 0.8s ease;
         }
 
         .topbar {
@@ -52,6 +54,7 @@
             border-radius: 22px;
             box-shadow: var(--shadow);
             margin-bottom: 24px;
+            animation: fadeUp 0.7s ease;
         }
 
         .brand-wrap {
@@ -70,12 +73,19 @@
             color: white;
             background: linear-gradient(135deg, var(--blue-dark), var(--blue));
             box-shadow: 0 10px 24px rgba(37,99,235,0.35);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .logo:hover {
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 14px 28px rgba(37,99,235,0.42);
         }
 
         .brand-text h1 {
             margin: 0;
             font-size: 24px;
             color: var(--text-strong);
+            letter-spacing: -0.02em;
         }
 
         .brand-text p {
@@ -101,21 +111,38 @@
             color: #dbeafe;
             font-size: 14px;
             font-weight: 600;
+            transition: transform 0.2s ease, background 0.2s ease;
         }
 
-        .logout-btn {
+        .user-chip:hover {
+            transform: translateY(-1px);
+            background: rgba(59,130,246,0.16);
+        }
+
+        .logout-btn,
+        .logs-btn {
             text-decoration: none;
             padding: 10px 16px;
             border-radius: 14px;
             color: white;
-            background: linear-gradient(135deg, #ef4444, #dc2626);
             font-weight: 700;
-            transition: transform 0.18s ease, opacity 0.18s ease;
+            transition: transform 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease;
+            display: inline-block;
         }
 
-        .logout-btn:hover {
-            transform: translateY(-1px);
-            opacity: 0.95;
+        .logout-btn {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .logs-btn {
+            background: linear-gradient(135deg, #334155, #475569);
+        }
+
+        .logout-btn:hover,
+        .logs-btn:hover {
+            transform: translateY(-2px);
+            opacity: 0.96;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.20);
         }
 
         .hero {
@@ -129,6 +156,12 @@
             border: 1px solid var(--line);
             border-radius: var(--radius);
             box-shadow: var(--shadow);
+        }
+
+        .welcome-panel,
+        .info-panel,
+        .panel.card {
+            animation: fadeUp 0.8s ease;
         }
 
         .welcome-panel {
@@ -147,6 +180,7 @@
             font-size: 32px;
             line-height: 1.1;
             color: var(--text-strong);
+            letter-spacing: -0.03em;
         }
 
         .welcome-panel p {
@@ -170,6 +204,13 @@
             border-radius: 18px;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.06);
+            transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+        }
+
+        .mini-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255,255,255,0.1);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.18);
         }
 
         .mini-card .label {
@@ -184,6 +225,7 @@
             font-size: 22px;
             font-weight: 800;
             color: var(--text-strong);
+            animation: glowPulse 2.4s ease-in-out infinite;
         }
 
         .info-panel {
@@ -254,6 +296,14 @@
             background: #1e293b;
             color: #f8fafc;
             border: 1px solid #334155;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.18s ease;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: rgba(96,165,250,0.6);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.14);
+            transform: translateY(-1px);
         }
 
         input::placeholder {
@@ -281,7 +331,7 @@
         }
 
         .btn-primary:hover {
-            transform: translateY(-1px);
+            transform: translateY(-2px);
             box-shadow: 0 14px 28px rgba(37,99,235,0.42);
         }
 
@@ -292,6 +342,8 @@
 
         .btn-secondary:hover {
             background: #475569;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.18);
         }
 
         .result-box {
@@ -304,6 +356,7 @@
             border: 1px solid rgba(16,185,129,0.16);
             position: relative;
             overflow: hidden;
+            animation: fadeUp 0.9s ease;
         }
 
         .result-label {
@@ -320,6 +373,7 @@
             font-weight: 800;
             color: white;
             word-break: break-word;
+            animation: glowPulse 2.4s ease-in-out infinite;
         }
 
         .special-popup {
@@ -332,7 +386,7 @@
             color: #fff;
             background: linear-gradient(135deg, #ec4899, #f43f5e);
             box-shadow: 0 12px 30px rgba(244, 63, 94, 0.35);
-            animation: popIn 0.45s ease, glowPulse 1.2s infinite alternate;
+            animation: popIn 0.45s ease, glowPulsePink 1.2s infinite alternate;
             position: relative;
             z-index: 2;
         }
@@ -425,6 +479,14 @@
             justify-content: space-between;
             align-items: center;
             gap: 16px;
+            transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+            animation: fadeUp 0.9s ease;
+        }
+
+        .history-item:hover {
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.03);
+            border-color: rgba(255,255,255,0.08);
         }
 
         .history-expression {
@@ -448,6 +510,36 @@
             border: 1px dashed #334155;
             color: var(--muted);
             line-height: 1.6;
+            animation: fadeUp 0.8s ease;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes glowPulse {
+            0%, 100% {
+                text-shadow: 0 0 0 rgba(255,255,255,0);
+            }
+            50% {
+                text-shadow: 0 0 12px rgba(255,255,255,0.08);
+            }
+        }
+
+        @keyframes glowPulsePink {
+            0% {
+                box-shadow: 0 0 0 rgba(244, 63, 94, 0.25);
+            }
+            100% {
+                box-shadow: 0 0 24px rgba(244, 63, 94, 0.6);
+            }
         }
 
         @keyframes popIn {
@@ -458,15 +550,6 @@
             100% {
                 transform: scale(1);
                 opacity: 1;
-            }
-        }
-
-        @keyframes glowPulse {
-            0% {
-                box-shadow: 0 0 0 rgba(244, 63, 94, 0.25);
-            }
-            100% {
-                box-shadow: 0 0 24px rgba(244, 63, 94, 0.6);
             }
         }
 
@@ -515,6 +598,7 @@
             .top-actions {
                 width: 100%;
                 justify-content: space-between;
+                flex-wrap: wrap;
             }
 
             .welcome-panel h2 {
@@ -540,6 +624,9 @@
 
             <div class="top-actions">
                 <div class="user-chip">Welcome, {{ user }}</div>
+                {% if user == "isaiah" %}
+                    <a class="logs-btn" href="/logs">View Logs</a>
+                {% endif %}
                 <a class="logout-btn" href="/logout">Logout</a>
             </div>
         </div>
@@ -564,8 +651,8 @@
                         <div class="value">{{ history|length }}</div>
                     </div>
                     <div class="mini-card">
-                        <div class="label">Status</div>
-                        <div class="value">Live</div>
+                        <div class="label">Total Calculations</div>
+                        <div class="value">{{ total_calculations }}</div>
                     </div>
                 </div>
             </div>
@@ -573,8 +660,8 @@
             <div class="panel info-panel">
                 <h3>Quick overview</h3>
                 <p>
-                    Your calculator is now running with login support, history tracking, and a cleaner
-                    dashboard UI. This is a solid full-stack project foundation you can keep improving.
+                    Your calculator is running with account access, saved history, admin logging,
+                    and a polished dashboard experience.
                 </p>
             </div>
         </div>
