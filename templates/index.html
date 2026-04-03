@@ -1,111 +1,336 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Isaiah Calculator</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #111827;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            margin: 0;
-            padding: 40px 20px;
-        }
-
-        .card {
-            background: #1f2937;
-            padding: 30px;
-            border-radius: 16px;
-            width: 360px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-
-        h1, h2 {
-            text-align: center;
-        }
-
-        input, select, button {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 10px;
-            border: none;
-            font-size: 16px;
+        * {
             box-sizing: border-box;
         }
 
-        input, select {
-            background: #374151;
-            color: white;
+        body {
+            margin: 0;
+            font-family: Inter, Arial, sans-serif;
+            background: linear-gradient(135deg, #0b1220 0%, #111827 50%, #0f172a 100%);
+            color: #e5e7eb;
+            min-height: 100vh;
         }
 
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 20px 48px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            padding: 16px 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(10px);
+            border-radius: 18px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 700;
+            color: #f9fafb;
+        }
+
+        .brand p {
+            margin: 6px 0 0;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-badge {
+            padding: 10px 14px;
+            background: rgba(37, 99, 235, 0.14);
+            border: 1px solid rgba(96, 165, 250, 0.25);
+            color: #bfdbfe;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 12px;
+            background: #ef4444;
+            color: white;
+            font-weight: 600;
+            transition: 0.2s ease;
+            display: inline-block;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: rgba(17, 24, 39, 0.82);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.30);
+        }
+
+        .card h2 {
+            margin: 0 0 6px;
+            font-size: 22px;
+            color: #f9fafb;
+        }
+
+        .subtitle {
+            margin: 0 0 22px;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .label {
+            display: block;
+            margin: 0 0 8px;
+            color: #cbd5e1;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        input,
+        select,
         button {
-            background: #2563eb;
-            color: white;
-            font-weight: bold;
+            width: 100%;
+            border: none;
+            outline: none;
+            border-radius: 14px;
+            font-size: 15px;
+        }
+
+        input,
+        select {
+            padding: 14px 15px;
+            background: #1e293b;
+            color: #f8fafc;
+            border: 1px solid #334155;
+            margin-bottom: 16px;
+        }
+
+        input::placeholder {
+            color: #94a3b8;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .primary-btn,
+        .secondary-btn {
+            padding: 14px 16px;
+            font-weight: 700;
             cursor: pointer;
+            transition: 0.2s ease;
         }
 
-        button:hover {
-            background: #1d4ed8;
+        .primary-btn {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: white;
+            box-shadow: 0 8px 20px rgba(37,99,235,0.35);
         }
 
-        .result {
-            margin-top: 16px;
-            padding: 12px;
-            background: #111827;
-            border-radius: 10px;
-            text-align: center;
+        .primary-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 24px rgba(37,99,235,0.40);
+        }
+
+        .secondary-btn {
+            background: #334155;
+            color: #e2e8f0;
+        }
+
+        .secondary-btn:hover {
+            background: #475569;
+        }
+
+        .result-box {
+            margin-top: 24px;
+            padding: 18px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(37,99,235,0.18), rgba(15,23,42,0.8));
+            border: 1px solid rgba(96,165,250,0.20);
+        }
+
+        .result-label {
+            margin: 0 0 8px;
+            color: #93c5fd;
+            font-size: 13px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .result-value {
+            margin: 0;
+            font-size: 30px;
+            font-weight: 800;
+            color: #ffffff;
+            word-break: break-word;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .history-header h3 {
+            margin: 0;
             font-size: 20px;
-            font-weight: bold;
+            color: #f9fafb;
         }
 
-        .history {
-            margin-top: 20px;
-            background: #111827;
-            padding: 12px;
-            border-radius: 10px;
+        .history-count {
+            font-size: 13px;
+            color: #94a3b8;
+            background: #0f172a;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid #1e293b;
         }
 
-        .history ul {
-            padding-left: 20px;
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
-        .history li {
-            margin-bottom: 6px;
+        .history-item {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 14px 16px;
+            color: #e2e8f0;
+            font-size: 15px;
+        }
+
+        .empty-history {
+            padding: 22px;
+            border-radius: 16px;
+            background: #0f172a;
+            border: 1px dashed #334155;
+            color: #94a3b8;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        @media (max-width: 860px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 14px;
+            }
+
+            .topbar-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .button-row {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Isaiah Calculator</h1>
+    <div class="page">
+        <div class="topbar">
+            <div class="brand">
+                <h1>Isaiah Calculator</h1>
+                <p>Clean, fast, and simple calculations in one place.</p>
+            </div>
 
-        <form method="POST">
-            <input type="text" name="num1" placeholder="First number" required>
-            <input type="text" name="num2" placeholder="Second number" required>
+            <div class="topbar-right">
+                <div class="user-badge">Logged in as {{ user }}</div>
+                <a class="logout-btn" href="/logout">Logout</a>
+            </div>
+        </div>
 
-            <select name="operation">
-                <option value="+">Add (+)</option>
-                <option value="-">Subtract (-)</option>
-                <option value="*">Multiply (*)</option>
-                <option value="/">Divide (/)</option>
-            </select>
+        <div class="grid">
+            <div class="card">
+                <h2>Calculator</h2>
+                <p class="subtitle">Enter your numbers, choose an operation, and calculate instantly.</p>
 
-            <button type="submit">Calculate</button>
-        </form>
+                <form method="POST">
+                    <label class="label">First number</label>
+                    <input type="text" name="num1" placeholder="e.g. 25" required>
 
-        <div class="result">Result: {{ result }}</div>
+                    <label class="label">Second number</label>
+                    <input type="text" name="num2" placeholder="e.g. 5" required>
 
-        <div class="history">
-            <h2>History</h2>
-            <ul>
-                {% for item in history %}
-                    <li>{{ item }}</li>
-                {% endfor %}
-            </ul>
+                    <label class="label">Operation</label>
+                    <select name="operation">
+                        <option value="+">Add (+)</option>
+                        <option value="-">Subtract (-)</option>
+                        <option value="*">Multiply (*)</option>
+                        <option value="/">Divide (/)</option>
+                    </select>
+
+                    <div class="button-row">
+                        <button class="primary-btn" type="submit">Calculate</button>
+                        <button class="secondary-btn" type="submit" name="clear" value="1">Clear History</button>
+                    </div>
+                </form>
+
+                <div class="result-box">
+                    <p class="result-label">Latest Result</p>
+                    <p class="result-value">{{ result if result else "—" }}</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="history-header">
+                    <h3>History</h3>
+                    <div class="history-count">{{ history|length }} item(s)</div>
+                </div>
+
+                {% if history %}
+                    <ul class="history-list">
+                        {% for item in history|reverse %}
+                            <li class="history-item">{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="empty-history">
+                        No calculations yet. Try one and it’ll show up here.
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 </body>
