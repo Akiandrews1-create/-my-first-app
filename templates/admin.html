@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Panel</title>
+<style>
+body {
+    background:#0b1220;
+    color:white;
+    font-family:Arial;
+    padding:30px;
+}
+
+.card {
+    background:#1e293b;
+    padding:20px;
+    border-radius:12px;
+    margin-bottom:20px;
+}
+
+button {
+    padding:8px 12px;
+    border:none;
+    border-radius:6px;
+    background:red;
+    color:white;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Admin Panel</h1>
+
+<div class="card">
+    <h3>Total Users: {{ total_users }}</h3>
+    <h3>Total Logins: {{ total_logins }}</h3>
+</div>
+
+<div class="card">
+    <h2>Users</h2>
+
+    {% for user in users %}
+        <p>
+            {{ user["username"] }}
+            <a href="/delete-user/{{ user['id'] }}">
+                <button>Delete</button>
+            </a>
+        </p>
+    {% endfor %}
+</div>
+
+<a href="/logout">
+    <button>Logout</button>
+</a>
+
+</body>
+</html>

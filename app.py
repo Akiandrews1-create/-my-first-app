@@ -6,8 +6,12 @@ import sqlite3
 import os
 
 app = Flask(__name__)
-app.secret_key = "secret123"
+app.secret_key = os.environ.get("SECRET_KEY", "change-this-in-production")
 app.permanent_session_lifetime = timedelta(minutes=30)
+
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = os.environ.get("SESSION_COOKIE_SECURE", "false").lower() == "true"
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -15,6 +19,9 @@ login_manager.login_view = "login"
 
 ADMIN_USERNAME = "isaiah"
 DB_PATH = "users.db"
+MIN_PASSWORD_LENGTH = 8
+MAX_LOGIN_ATTEMPTS = 5
+LOGIN_BLOCK_MINUTES = 10
 
 
 def get_db_connection():
@@ -40,8 +47,7 @@ def init_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
                 expression TEXT NOT NULL,
-                created_at TEXT NOT NULL DEFAULT (datetime('now')),
-                FOREIGN KEY (user_id) REFERENCES users (id)
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
             )
         """)
 
@@ -53,6 +59,14 @@ def init_db():
                 action TEXT NOT NULL,
                 ip_address TEXT,
                 log_time TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        """)
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS login_attempts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ip_address TEXT NOT NULL,
+                attempt_time TEXT NOT NULL DEFAULT (datetime('now'))
             )
         """)
 
@@ -79,24 +93,69 @@ def load_user(user_id):
     return None
 
 
-def log_action(user_id, username, action):
+def get_client_ip():
     ip = request.headers.get("X-Forwarded-For", request.remote_addr)
     if ip and "," in ip:
         ip = ip.split(",")[0].strip()
+    return ip or "unknown"
 
+
+def log_action(user_id, username, action):
     with get_db_connection() as conn:
         conn.execute(
             """
             INSERT INTO login_logs (user_id, username, action, ip_address)
             VALUES (?, ?, ?, ?)
             """,
-            (user_id, username, action, ip)
+            (user_id, username, action, get_client_ip())
         )
 
 
 @app.before_request
 def keep_session_alive():
     session.permanent = True
+
+
+def clear_old_failed_attempts(ip_address):
+    with get_db_connection() as conn:
+        conn.execute(
+            """
+            DELETE FROM login_attempts
+            WHERE ip_address = ?
+              AND attempt_time < datetime('now', ?)
+            """,
+            (ip_address, f"-{LOGIN_BLOCK_MINUTES} minutes")
+        )
+
+
+def record_failed_login(ip_address):
+    with get_db_connection() as conn:
+        conn.execute(
+            "INSERT INTO login_attempts (ip_address) VALUES (?)",
+            (ip_address,)
+        )
+
+
+def clear_failed_logins(ip_address):
+    with get_db_connection() as conn:
+        conn.execute(
+            "DELETE FROM login_attempts WHERE ip_address = ?",
+            (ip_address,)
+        )
+
+
+def is_ip_blocked(ip_address):
+    clear_old_failed_attempts(ip_address)
+    with get_db_connection() as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) AS count FROM login_attempts WHERE ip_address = ?",
+            (ip_address,)
+        ).fetchone()
+    return row["count"] >= MAX_LOGIN_ATTEMPTS
+
+
+def password_is_valid(password):
+    return len(password) >= MIN_PASSWORD_LENGTH
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -270,6 +329,140 @@ def logs():
     )
 
 
+@app.route("/admin")
+@login_required
+def admin():
+    if current_user.username.lower() != ADMIN_USERNAME:
+        abort(403)
+
+    with get_db_connection() as conn:
+        users = conn.execute("""
+            SELECT
+                u.id,
+                u.username,
+                COALESCE(c.calc_count, 0) AS calc_count,
+                COALESCE(l.login_count, 0) AS login_count,
+                COALESCE(o.logout_count, 0) AS logout_count
+            FROM users u
+            LEFT JOIN (
+                SELECT user_id, COUNT(*) AS calc_count
+                FROM calculations
+                GROUP BY user_id
+            ) c ON u.id = c.user_id
+            LEFT JOIN (
+                SELECT username, COUNT(*) AS login_count
+                FROM login_logs
+                WHERE action = 'login'
+                GROUP BY username
+            ) l ON u.username = l.username
+            LEFT JOIN (
+                SELECT username, COUNT(*) AS logout_count
+                FROM login_logs
+                WHERE action = 'logout'
+                GROUP BY username
+            ) o ON u.username = o.username
+            ORDER BY u.username ASC
+        """).fetchall()
+
+        total_users = conn.execute(
+            "SELECT COUNT(*) AS count FROM users"
+        ).fetchone()["count"]
+
+        total_calculations = conn.execute(
+            "SELECT COUNT(*) AS count FROM calculations"
+        ).fetchone()["count"]
+
+    return render_template(
+        "admin.html",
+        users=users,
+        total_users=total_users,
+        total_calculations=total_calculations,
+        user=current_user.username
+    )
+
+
+@app.route("/admin/delete-user/<int:user_id>", methods=["POST"])
+@login_required
+def admin_delete_user(user_id):
+    if current_user.username.lower() != ADMIN_USERNAME:
+        abort(403)
+
+    with get_db_connection() as conn:
+        target_user = conn.execute(
+            "SELECT id, username FROM users WHERE id = ?",
+            (user_id,)
+        ).fetchone()
+
+        if not target_user:
+            return redirect(url_for("admin"))
+
+        if target_user["username"].lower() == ADMIN_USERNAME:
+            return redirect(url_for("admin"))
+
+        conn.execute("DELETE FROM calculations WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM login_logs WHERE user_id = ? OR username = ?", (user_id, target_user["username"]))
+        conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+
+    return redirect(url_for("admin"))
+
+
+@app.route("/admin/reset-password/<int:user_id>", methods=["POST"])
+@login_required
+def admin_reset_password(user_id):
+    if current_user.username.lower() != ADMIN_USERNAME:
+        abort(403)
+
+    new_password = request.form.get("new_password", "").strip()
+
+    if not password_is_valid(new_password):
+        return redirect(url_for("admin"))
+
+    hashed_password = generate_password_hash(new_password)
+
+    with get_db_connection() as conn:
+        conn.execute(
+            "UPDATE users SET password = ? WHERE id = ?",
+            (hashed_password, user_id)
+        )
+
+    return redirect(url_for("admin"))
+
+
+@app.route("/change-password", methods=["GET", "POST"])
+@login_required
+def change_password():
+    error = ""
+    success = ""
+
+    if request.method == "POST":
+        old_password = request.form["old_password"]
+        new_password = request.form["new_password"]
+
+        if not password_is_valid(new_password):
+            error = f"New password must be at least {MIN_PASSWORD_LENGTH} characters long."
+            return render_template("change_password.html", error=error, success=success)
+
+        with get_db_connection() as conn:
+            user = conn.execute(
+                "SELECT password FROM users WHERE id = ?",
+                (current_user.id,)
+            ).fetchone()
+
+            if not check_password_hash(user["password"], old_password):
+                error = "Old password is incorrect."
+            elif check_password_hash(user["password"], new_password):
+                error = "New password must be different from your current password."
+            else:
+                hashed = generate_password_hash(new_password)
+                conn.execute(
+                    "UPDATE users SET password = ? WHERE id = ?",
+                    (hashed, current_user.id)
+                )
+                success = "Password updated successfully."
+
+    return render_template("change_password.html", error=error, success=success)
+
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     error_message = ""
@@ -284,6 +477,10 @@ def register():
 
         if len(username) > 30:
             error_message = "Username must be 30 characters or fewer."
+            return render_template("register.html", error_message=error_message)
+
+        if not password_is_valid(password):
+            error_message = f"Password must be at least {MIN_PASSWORD_LENGTH} characters long."
             return render_template("register.html", error_message=error_message)
 
         hashed_password = generate_password_hash(password)
@@ -306,6 +503,12 @@ def login():
     error_message = ""
 
     if request.method == "POST":
+        ip_address = get_client_ip()
+
+        if is_ip_blocked(ip_address):
+            error_message = f"Too many failed attempts. Try again in {LOGIN_BLOCK_MINUTES} minutes."
+            return render_template("login.html", error_message=error_message)
+
         username = request.form["username"].strip().lower()
         password = request.form["password"]
 
@@ -316,10 +519,12 @@ def login():
             ).fetchone()
 
         if user and check_password_hash(user["password"], password):
+            clear_failed_logins(ip_address)
             login_user(User(user["id"], user["username"]))
             log_action(user["id"], user["username"], "login")
             return redirect(url_for("home"))
 
+        record_failed_login(ip_address)
         error_message = "Invalid username or password."
 
     return render_template("login.html", error_message=error_message)

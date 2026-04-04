@@ -1,232 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - Isaiah Calculator</title>
-    <style>
-        * { box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile - Isaiah Calculator</title>
 
-        body {
-            margin: 0;
-            font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
-            background:
-                radial-gradient(circle at 20% 10%, rgba(59,130,246,0.08), transparent 30%),
-                radial-gradient(circle at 80% 90%, rgba(16,185,129,0.06), transparent 30%),
-                #0b1220;
-            color: #e5e7eb;
-            min-height: 100vh;
-            padding: 40px 20px;
-        }
+<style>
+* { box-sizing: border-box; }
 
-        .container {
-            max-width: 1100px;
-            margin: auto;
-            animation: fadeUp 0.8s ease;
-        }
+body {
+    margin: 0;
+    font-family: Inter, -apple-system, sans-serif;
+    background:
+        radial-gradient(circle at 20% 10%, rgba(59,130,246,0.08), transparent 30%),
+        radial-gradient(circle at 80% 90%, rgba(16,185,129,0.06), transparent 30%),
+        #0b1220;
+    color: #e5e7eb;
+    min-height: 100vh;
+    padding: 40px 20px;
+}
 
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 28px;
-            background: rgba(255,255,255,0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 18px;
-            padding: 18px 22px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.18);
-        }
+.container {
+    max-width: 1100px;
+    margin: auto;
+    animation: fadeUp 0.8s ease;
+}
 
-        .topbar h1 {
-            font-size: 22px;
-            font-weight: 600;
-            color: #f9fafb;
-            margin: 0;
-        }
+/* ===== TOPBAR ===== */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    background: rgba(255,255,255,0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 18px;
+    padding: 18px 22px;
+}
 
-        .actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
+.topbar h1 {
+    margin: 0;
+}
 
-        .actions a {
-            text-decoration: none;
-            padding: 10px 16px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 14px;
-            transition: transform 0.2s ease;
-            color: white;
-        }
+.actions {
+    display: flex;
+    gap: 10px;
+}
 
-        .actions a:hover {
-            transform: translateY(-2px);
-        }
+.actions a {
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-weight: 600;
+}
 
-        .back-btn { background: rgba(59,130,246,0.15); color: #60a5fa !important; }
-        .logout-btn { background: rgba(239,68,68,0.15); color: #f87171 !important; }
+.back-btn { background: rgba(59,130,246,0.15); color: #60a5fa; }
+.logout-btn { background: rgba(239,68,68,0.15); color: #f87171; }
 
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 14px;
-            margin-bottom: 22px;
-        }
+/* ===== STATS ===== */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+}
 
-        .stat-box {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 16px;
-            padding: 16px;
-        }
+.stat-box {
+    background: rgba(255,255,255,0.03);
+    border-radius: 16px;
+    padding: 16px;
+}
 
-        .stat-label {
-            font-size: 12px;
-            color: #94a3b8;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
+.stat-label {
+    font-size: 12px;
+    color: #94a3b8;
+}
 
-        .stat-value {
-            font-size: 26px;
-            font-weight: 800;
-            color: #f8fafc;
-        }
+.stat-value {
+    font-size: 26px;
+    font-weight: 800;
+}
 
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 22px;
-        }
+/* ===== GRID ===== */
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+}
 
-        .card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 18px;
-            padding: 22px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.16);
-        }
+.card {
+    background: rgba(255,255,255,0.03);
+    border-radius: 18px;
+    padding: 22px;
+}
 
-        .card h2 {
-            margin: 0 0 14px;
-            font-size: 20px;
-            color: #f8fafc;
-        }
+.card h2 {
+    margin-bottom: 14px;
+}
 
-        .username-box {
-            padding: 18px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, rgba(59,130,246,0.18), rgba(17,24,39,0.8));
-            border: 1px solid rgba(96,165,250,0.15);
-        }
+/* ===== ACCOUNT ===== */
+.username-box {
+    padding: 18px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(59,130,246,0.18), rgba(17,24,39,0.8));
+}
 
-        .username-label {
-            font-size: 12px;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 8px;
-        }
+.username-value {
+    font-size: 26px;
+    font-weight: 800;
+}
 
-        .username-value {
-            font-size: 26px;
-            font-weight: 800;
-            color: #f8fafc;
-        }
+/* ===== BUTTON ===== */
+.change-btn {
+    margin-top: 16px;
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: #3b82f6;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+}
 
-        .history-list {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+/* ===== HISTORY ===== */
+.history-list {
+    list-style: none;
+    padding: 0;
+}
 
-        .history-item {
-            padding: 14px 16px;
-            border-radius: 14px;
-            background: #0f172a;
-            border: 1px solid #1e293b;
-            color: #e2e8f0;
-        }
+.history-item {
+    padding: 12px;
+    margin-bottom: 10px;
+    background: #0f172a;
+    border-radius: 10px;
+}
 
-        .empty {
-            padding: 18px;
-            border-radius: 14px;
-            background: #0f172a;
-            border: 1px dashed #334155;
-            color: #94a3b8;
-        }
+.empty {
+    color: #94a3b8;
+}
 
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(14px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
-        @media (max-width: 900px) {
-            .grid, .stats {
-                grid-template-columns: 1fr;
-            }
-
-            .topbar {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-        }
-    </style>
+@media (max-width: 900px) {
+    .grid, .stats {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 </head>
+
 <body>
-    <div class="container">
-        <div class="topbar">
-            <h1>Profile</h1>
-            <div class="actions">
-                <a class="back-btn" href="/">Back</a>
-                <a class="logout-btn" href="/logout">Logout</a>
-            </div>
-        </div>
 
-        <div class="stats">
-            <div class="stat-box">
-                <div class="stat-label">Calculations</div>
-                <div class="stat-value">{{ total_calculations }}</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Logins</div>
-                <div class="stat-value">{{ total_logins }}</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Logouts</div>
-                <div class="stat-value">{{ total_logouts }}</div>
-            </div>
-        </div>
+<div class="container">
 
-        <div class="grid">
-            <div class="card">
-                <h2>Account Info</h2>
-                <div class="username-box">
-                    <div class="username-label">Username</div>
-                    <div class="username-value">{{ user }}</div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>Recent Calculations</h2>
-                {% if recent_history %}
-                    <ul class="history-list">
-                        {% for item in recent_history %}
-                            <li class="history-item">{{ item }}</li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <div class="empty">No recent calculations yet.</div>
-                {% endif %}
-            </div>
+    <div class="topbar">
+        <h1>Profile</h1>
+        <div class="actions">
+            <a class="back-btn" href="/">Back</a>
+            <a class="logout-btn" href="/logout">Logout</a>
         </div>
     </div>
+
+    <div class="stats">
+        <div class="stat-box">
+            <div class="stat-label">Calculations</div>
+            <div class="stat-value">{{ total_calculations }}</div>
+        </div>
+
+        <div class="stat-box">
+            <div class="stat-label">Logins</div>
+            <div class="stat-value">{{ total_logins }}</div>
+        </div>
+
+        <div class="stat-box">
+            <div class="stat-label">Logouts</div>
+            <div class="stat-value">{{ total_logouts }}</div>
+        </div>
+    </div>
+
+    <div class="grid">
+
+        <!-- ACCOUNT -->
+        <div class="card">
+            <h2>Account Info</h2>
+
+            <div class="username-box">
+                <div class="username-value">{{ user }}</div>
+            </div>
+
+            <!-- 🔐 FIXED BUTTON LOCATION -->
+            <a href="/change-password">
+                <button class="change-btn">Change Password</button>
+            </a>
+        </div>
+
+        <!-- HISTORY -->
+        <div class="card">
+            <h2>Recent Calculations</h2>
+
+            {% if recent_history %}
+                <ul class="history-list">
+                    {% for item in recent_history %}
+                        <li class="history-item">{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty">No recent calculations yet.</div>
+            {% endif %}
+        </div>
+
+    </div>
+
+</div>
+
 </body>
 </html>
