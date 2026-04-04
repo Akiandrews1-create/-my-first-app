@@ -153,7 +153,7 @@ def home():
                 success_message = "Calculation saved."
 
                 if result == 69:
-                    special_message = "SAYANGGGGG BUNNNNYYY ❤️"
+                    special_message = "SAYANGGGGG ❤️"
 
             except ValueError:
                 error_message = "Please enter valid numbers."
@@ -247,12 +247,25 @@ def logs():
             "SELECT COUNT(DISTINCT username) AS count FROM login_logs"
         ).fetchone()["count"]
 
+        chart_rows = conn.execute("""
+            SELECT date(log_time) AS day,
+                   SUM(CASE WHEN action = 'login' THEN 1 ELSE 0 END) AS login_count
+            FROM login_logs
+            GROUP BY date(log_time)
+            ORDER BY date(log_time)
+        """).fetchall()
+
+    chart_labels = [row["day"] for row in chart_rows]
+    chart_values = [row["login_count"] for row in chart_rows]
+
     return render_template(
         "logs.html",
         logs=rows,
         total_logins=total_logins,
         total_logouts=total_logouts,
         unique_users=unique_users,
+        chart_labels=chart_labels,
+        chart_values=chart_values,
         user=current_user.username
     )
 
