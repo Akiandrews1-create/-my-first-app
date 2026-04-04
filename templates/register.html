@@ -1,63 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Register</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Isaiah Calculator</title>
+    <style>
+        * { box-sizing: border-box; }
 
-<style>
-body {
-    background:#0b1220;
-    font-family: Arial;
-    color:white;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-}
+        body {
+            margin: 0;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+            background:
+                radial-gradient(circle at 20% 10%, rgba(59,130,246,0.08), transparent 30%),
+                radial-gradient(circle at 80% 90%, rgba(16,185,129,0.06), transparent 30%),
+                #0b1220;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            color: #e5e7eb;
+            padding: 20px;
+        }
 
-.card {
-    background:#1e293b;
-    padding:30px;
-    border-radius:12px;
-    width:300px;
-}
+        .card {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(17, 24, 39, 0.82);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.28);
+        }
 
-input {
-    width:100%;
-    padding:10px;
-    margin-bottom:10px;
-}
+        .logo {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            color: white;
+            background: linear-gradient(135deg, #10b981, #22c55e);
+            margin-bottom: 18px;
+        }
 
-button {
-    width:100%;
-    padding:10px;
-    background:#10b981;
-    color:white;
-    border:none;
-}
-</style>
+        h1 {
+            margin: 0 0 8px;
+            color: #f8fafc;
+            font-size: 30px;
+        }
+
+        p {
+            margin: 0 0 22px;
+            color: #94a3b8;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        input, button {
+            width: 100%;
+            border: none;
+            outline: none;
+            border-radius: 14px;
+            font-size: 16px;
+        }
+
+        input {
+            padding: 14px 15px;
+            background: #1e293b;
+            color: #f8fafc;
+            border: 1px solid #334155;
+            margin-bottom: 14px;
+        }
+
+        input::placeholder {
+            color: #94a3b8;
+        }
+
+        button {
+            padding: 14px 16px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #10b981, #22c55e);
+            color: white;
+            cursor: pointer;
+        }
+
+        .bottom-text {
+            margin-top: 18px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .error {
+            margin-bottom: 14px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: rgba(239,68,68,0.14);
+            border: 1px solid rgba(239,68,68,0.22);
+            color: #fca5a5;
+            font-size: 14px;
+        }
+    </style>
 </head>
-
 <body>
+    <div class="card">
+        <div class="logo">IC</div>
+        <h1>Create account</h1>
+        <p>Register to start using your calculator dashboard.</p>
 
-<div class="card">
-<h2>Register</h2>
+        {% if error_message %}
+            <div class="error">{{ error_message }}</div>
+        {% endif %}
 
-{% if error_message %}
-<p style="color:red;">{{ error_message }}</p>
-{% endif %}
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input name="username" placeholder="Username" required>
+            <input name="password" type="password" placeholder="Password (min 8 chars)" required>
+            <button type="submit">Register</button>
+        </form>
 
-<form method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <input name="username" placeholder="Username" required>
-    <input name="password" type="password" placeholder="Password" required>
-    <button type="submit">Register</button>
-</form>
-
-<p><a href="/login">Login</a></p>
-
-</div>
-
+        <div class="bottom-text">
+            Already have an account? <a href="/login">Login</a>
+        </div>
+    </div>
 </body>
 </html>

@@ -1,58 +1,666 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Admin Panel</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel - Isaiah Calculator</title>
+
 <style>
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --bg:
+        radial-gradient(circle at 15% 10%, rgba(124,58,237,0.12), transparent 28%),
+        radial-gradient(circle at 85% 85%, rgba(59,130,246,0.10), transparent 28%),
+        linear-gradient(180deg, #08111f 0%, #0b1220 100%);
+    --panel: rgba(17, 24, 39, 0.72);
+    --panel-soft: rgba(255,255,255,0.04);
+    --line: rgba(255,255,255,0.07);
+    --text: #e5e7eb;
+    --text-strong: #f8fafc;
+    --muted: #94a3b8;
+    --shadow: 0 20px 50px rgba(0,0,0,0.28);
+    --blue1: #2563eb;
+    --blue2: #3b82f6;
+    --purple1: #7c3aed;
+    --purple2: #9333ea;
+    --red1: #ef4444;
+    --red2: #dc2626;
+    --gray1: #334155;
+    --gray2: #475569;
+    --green1: #059669;
+    --green2: #10b981;
+}
+
 body {
-    background:#0b1220;
-    color:white;
-    font-family:Arial;
-    padding:30px;
+    margin: 0;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 20px 40px;
+    overflow-x: hidden;
 }
 
-.card {
-    background:#1e293b;
-    padding:20px;
-    border-radius:12px;
-    margin-bottom:20px;
+.container {
+    max-width: 1220px;
+    margin: 0 auto;
 }
 
-button {
-    padding:8px 12px;
-    border:none;
-    border-radius:6px;
-    background:red;
-    color:white;
-    cursor:pointer;
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 22px;
+    background: var(--panel-soft);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+}
+
+.logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    color: white;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--purple1), var(--purple2));
+    box-shadow: 0 14px 30px rgba(124,58,237,0.28);
+    flex-shrink: 0;
+}
+
+.brand-text h1 {
+    margin: 0;
+    font-size: 24px;
+    color: var(--text-strong);
+    letter-spacing: -0.02em;
+}
+
+.brand-text p {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.action-btn {
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 14px;
+    color: white;
+    font-weight: 700;
+    display: inline-block;
+    text-align: center;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.back-btn {
+    background: linear-gradient(135deg, var(--blue1), var(--blue2));
+}
+
+.logs-btn {
+    background: linear-gradient(135deg, var(--gray1), var(--gray2));
+}
+
+.logout-btn {
+    background: linear-gradient(135deg, var(--red1), var(--red2));
+}
+
+.hero {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.hero-card,
+.side-card,
+.stat-card,
+.table-wrap {
+    background: var(--panel);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+}
+
+.hero-card {
+    padding: 26px;
+    background:
+        linear-gradient(135deg, rgba(124,58,237,0.20), rgba(17,24,39,0.82)),
+        var(--panel);
+}
+
+.hero-card h2 {
+    margin: 0 0 10px;
+    font-size: 32px;
+    line-height: 1.08;
+    color: var(--text-strong);
+}
+
+.hero-card p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 700px;
+}
+
+.hero-pills {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.pill {
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.06);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.side-card {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.side-card h3 {
+    margin: 0 0 10px;
+    color: var(--text-strong);
+    font-size: 20px;
+}
+
+.side-card p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.7;
+    font-size: 14px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    padding: 20px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.stat-value {
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--text-strong);
+}
+
+.table-wrap {
+    overflow: hidden;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 22px 22px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.table-header h3 {
+    margin: 0;
+    font-size: 21px;
+    color: var(--text-strong);
+}
+
+.table-header p {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.header-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 12px;
+    border-radius: 999px;
+    background: rgba(124,58,237,0.14);
+    color: #d8b4fe;
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.table-scroll {
+    width: 100%;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    min-width: 1100px;
+    border-collapse: collapse;
+}
+
+th, td {
+    text-align: left;
+    padding: 16px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    vertical-align: top;
+}
+
+th {
+    background: rgba(255,255,255,0.02);
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    border-top: none;
+}
+
+tbody tr:hover {
+    background: rgba(255,255,255,0.02);
+}
+
+.username {
+    font-weight: 800;
+    color: var(--text-strong);
+}
+
+.badge {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(124,58,237,0.16);
+    color: #d8b4fe;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.metric {
+    display: inline-flex;
+    min-width: 54px;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    color: var(--text-strong);
+    font-weight: 700;
+}
+
+.inline-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.inline-form input {
+    padding: 11px 12px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    background: #1e293b;
+    color: white;
+    min-width: 190px;
+    outline: none;
+}
+
+.inline-form input::placeholder {
+    color: #94a3b8;
+}
+
+.inline-form button,
+.delete-form button {
+    padding: 11px 14px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 800;
+    cursor: pointer;
+    color: white;
+}
+
+.reset-btn {
+    background: linear-gradient(135deg, var(--blue1), var(--blue2));
+}
+
+.delete-btn {
+    background: linear-gradient(135deg, var(--red1), var(--red2));
+}
+
+.protected {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.toast {
+    position: fixed;
+    top: 22px;
+    right: 22px;
+    z-index: 1000;
+    background: linear-gradient(135deg, var(--green1), var(--green2));
+    color: white;
+    padding: 14px 18px;
+    border-radius: 14px;
+    box-shadow: 0 18px 35px rgba(16,185,129,0.24);
+    opacity: 0;
+    transform: translateY(-18px);
+    transition: all 0.35s ease;
+    font-weight: 800;
+    pointer-events: none;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.72);
+    backdrop-filter: blur(6px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.25s ease;
+    z-index: 1001;
+    padding: 20px;
+}
+
+.modal.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-box {
+    width: 100%;
+    max-width: 430px;
+    background: rgba(17, 24, 39, 0.95);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 24px;
+    border-radius: 24px;
+    box-shadow: 0 22px 50px rgba(0,0,0,0.32);
+}
+
+.modal-box h4 {
+    margin: 0 0 10px;
+    font-size: 22px;
+    color: var(--text-strong);
+}
+
+.modal-box p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.modal-buttons {
+    margin-top: 18px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.modal-buttons button {
+    padding: 11px 14px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 800;
+    cursor: pointer;
+    color: white;
+}
+
+.cancel-btn {
+    background: linear-gradient(135deg, var(--gray1), var(--gray2));
+}
+
+.confirm-btn {
+    background: linear-gradient(135deg, var(--red1), var(--red2));
+}
+
+@media (max-width: 980px) {
+    .hero,
+    .stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    body {
+        padding: 18px 14px 28px;
+    }
+
+    .topbar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16px;
+    }
+
+    .actions .action-btn {
+        width: 100%;
+    }
+
+    .hero-card,
+    .side-card,
+    .stat-card {
+        padding: 18px;
+    }
+
+    .hero-card h2 {
+        font-size: 26px;
+    }
+
+    .table-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .toast {
+        left: 14px;
+        right: 14px;
+        top: 14px;
+    }
 }
 </style>
 </head>
-
 <body>
 
-<h1>Admin Panel</h1>
+<div class="container">
+    <div class="topbar">
+        <div class="brand">
+            <div class="logo">AP</div>
+            <div class="brand-text">
+                <h1>Admin Panel</h1>
+                <p>Control users, passwords, and app activity from one place.</p>
+            </div>
+        </div>
 
-<div class="card">
-    <h3>Total Users: {{ total_users }}</h3>
-    <h3>Total Logins: {{ total_logins }}</h3>
+        <div class="actions">
+            <a class="action-btn back-btn" href="/">Back</a>
+            <a class="action-btn logs-btn" href="/logs">Logs</a>
+            <a class="action-btn logout-btn" href="/logout">Logout</a>
+        </div>
+    </div>
+
+    <div class="hero">
+        <div class="hero-card">
+            <h2>Manage users like a real product dashboard.</h2>
+            <p>
+                Review user activity, reset credentials, protect your admin account,
+                and keep everything clean without touching the database manually.
+            </p>
+            <div class="hero-pills">
+                <div class="pill">Admin only</div>
+                <div class="pill">Password resets</div>
+                <div class="pill">User protection</div>
+            </div>
+        </div>
+
+        <div class="side-card">
+            <h3>Control center</h3>
+            <p>
+                This page is designed to give you a premium management experience
+                while keeping the workflow simple and fast.
+            </p>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value">{{ total_users }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Total Calculations</div>
+            <div class="stat-value">{{ total_calculations }}</div>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <div class="table-header">
+            <div>
+                <h3>User Management</h3>
+                <p>Reset passwords, track usage, and remove accounts safely.</p>
+            </div>
+            <div class="header-badge">Admin tools</div>
+        </div>
+
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Calculations</th>
+                        <th>Logins</th>
+                        <th>Logouts</th>
+                        <th>Reset Password</th>
+                        <th>Delete User</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in users %}
+                    <tr>
+                        <td>
+                            <div class="username">{{ row["username"] }}</div>
+                            {% if row["username"] == "isaiah" %}
+                                <div class="badge">Admin account</div>
+                            {% endif %}
+                        </td>
+                        <td><span class="metric">{{ row["calc_count"] }}</span></td>
+                        <td><span class="metric">{{ row["login_count"] }}</span></td>
+                        <td><span class="metric">{{ row["logout_count"] }}</span></td>
+                        <td>
+                            <form class="inline-form" method="POST" action="/admin/reset-password/{{ row['id'] }}" onsubmit="showToast('Password reset submitted')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <input type="password" name="new_password" placeholder="New password" required>
+                                <button class="reset-btn" type="submit">Reset</button>
+                            </form>
+                        </td>
+                        <td>
+                            {% if row["username"] != "isaiah" %}
+                            <button class="delete-btn" type="button" onclick="openModal({{ row['id'] }}, '{{ row['username'] }}')">Delete</button>
+                            {% else %}
+                            <span class="protected">Protected</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
-<div class="card">
-    <h2>Users</h2>
+<div id="toast" class="toast">Success</div>
 
-    {% for user in users %}
-        <p>
-            {{ user["username"] }}
-            <a href="/delete-user/{{ user['id'] }}">
-                <button>Delete</button>
-            </a>
-        </p>
-    {% endfor %}
+<div id="deleteModal" class="modal">
+    <div class="modal-box">
+        <h4>Delete user?</h4>
+        <p id="modalText">This action cannot be undone.</p>
+
+        <div class="modal-buttons">
+            <button class="cancel-btn" type="button" onclick="closeModal()">Cancel</button>
+            <form id="deleteForm" method="POST" onsubmit="showToast('User deleted')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button class="confirm-btn" type="submit">Delete User</button>
+            </form>
+        </div>
+    </div>
 </div>
 
-<a href="/logout">
-    <button>Logout</button>
-</a>
+<script>
+function showToast(message) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.classList.add("show");
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 2400);
+}
+
+function openModal(userId, username) {
+    document.getElementById("deleteModal").classList.add("active");
+    document.getElementById("deleteForm").action = "/admin/delete-user/" + userId;
+    document.getElementById("modalText").textContent =
+        'You are about to delete "' + username + '". This action cannot be undone.';
+}
+
+function closeModal() {
+    document.getElementById("deleteModal").classList.remove("active");
+}
+
+document.getElementById("deleteModal").addEventListener("click", function (e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+</script>
 
 </body>
 </html>

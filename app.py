@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
 import sqlite3
 import os
+import secrets
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-this-in-production")
@@ -111,9 +112,33 @@ def log_action(user_id, username, action):
         )
 
 
+def get_csrf_token():
+    token = session.get("_csrf_token")
+    if not token:
+        token = secrets.token_hex(16)
+        session["_csrf_token"] = token
+    return token
+
+
+@app.context_processor
+def inject_csrf_token():
+    return {"csrf_token": get_csrf_token()}
+
+
 @app.before_request
 def keep_session_alive():
     session.permanent = True
+
+
+def require_valid_csrf():
+    if request.method != "POST":
+        return
+
+    form_token = request.form.get("csrf_token", "")
+    session_token = session.get("_csrf_token", "")
+
+    if not (form_token and session_token and secrets.compare_digest(form_token, session_token)):
+        abort(400)
 
 
 def clear_old_failed_attempts(ip_address):
@@ -170,6 +195,8 @@ def home():
     operation_value = "+"
 
     if request.method == "POST":
+        require_valid_csrf()
+
         if "clear" in request.form:
             with get_db_connection() as conn:
                 conn.execute(
@@ -387,6 +414,8 @@ def admin_delete_user(user_id):
     if current_user.username.lower() != ADMIN_USERNAME:
         abort(403)
 
+    require_valid_csrf()
+
     with get_db_connection() as conn:
         target_user = conn.execute(
             "SELECT id, username FROM users WHERE id = ?",
@@ -412,6 +441,8 @@ def admin_reset_password(user_id):
     if current_user.username.lower() != ADMIN_USERNAME:
         abort(403)
 
+    require_valid_csrf()
+
     new_password = request.form.get("new_password", "").strip()
 
     if not password_is_valid(new_password):
@@ -435,6 +466,8 @@ def change_password():
     success = ""
 
     if request.method == "POST":
+        require_valid_csrf()
+
         old_password = request.form["old_password"]
         new_password = request.form["new_password"]
 
@@ -468,6 +501,8 @@ def register():
     error_message = ""
 
     if request.method == "POST":
+        require_valid_csrf()
+
         username = request.form["username"].strip().lower()
         password = request.form["password"]
 
@@ -503,6 +538,8 @@ def login():
     error_message = ""
 
     if request.method == "POST":
+        require_valid_csrf()
+
         ip_address = get_client_ip()
 
         if is_ip_blocked(ip_address):
